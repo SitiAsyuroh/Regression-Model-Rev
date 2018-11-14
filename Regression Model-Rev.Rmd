@@ -1,0 +1,70 @@
+---
+title: "Regression Model"
+author: "Siti Asuroh"
+date: "13 November 2018"
+output: html_document
+---
+## Libraries and Setup
+We'll set-up caching for this notebook given how computationally expensive some of the code we will write can get.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# R Programming with "data" Dataset
+First make sure the data We'll like to work with is also in Our current directory, and use the `read.csv()` to read our csv file into our global environment. Then, delete the first column in the data. And then, name the columns.
+The next step is to check the correlation of crime_rate and percent_m.  
+```{r}
+data<-read.csv("data_input/crime.csv")
+data<-data[,-1]
+names(data) <- c("percent_m", "is_south", "mean_education", "police_exp60", "police_exp59", "labour_participation", "m_per1000f", "state_pop", "nonwhites_per1000", "unemploy_m24", "unemploy_m39", "gdp", "inequality", "prob_prison", "time_prison", "crime_rate")
+cor(data$crime_rate,data$percent_m)
+```
+
+We will need to use `install.packages()` to install any packages that are not already downloaded onto Our machine. And then, load the package into Our workspace using the `library()` function. The next step is to check the correlation of all variable :
+```{r}
+#install.packages("GGally"), krn gak ada
+#install.packages("ggcorrplot")
+#ggcorrplot(cor(data))
+library(GGally)
+ggcorr(data)
+```
+#Building the Regression Model with all variables
+```{r}
+Model1<-lm(crime_rate~.,data)
+summary(Model1)
+```
+#Find the Best Model by Stepwise (Backward, Forward, Both)
+```{r}
+step(Model1,direction="backward")
+```
+#The best model of the Backward Method is taken from the smallest AIC value.
+```{r}
+Model2<-lm(formula = crime_rate ~ percent_m + mean_education + police_exp60 + 
+    m_per1000f + unemploy_m24 + unemploy_m39 + inequality + prob_prison, 
+    data = data)
+summary(Model2)
+```
+#If the model has been obtained, then check Multicollinearity
+```{r}
+library(car)
+vif(Model2)
+```
+Because all of the VIF values are <10 all, then the Multicollinearity assumption is fulfilled. And now, check normality by Histogram.
+
+```{r}
+hist(residuals(Model2))
+```
+#because it forms a bell curve, it can be concluded that it is Normal distribution.
+And now, We will to plot the Residual for the Heteroscedasticity Test
+```{r}
+plot(data$crime_rate,residuals(Model2))
+```
+#When the plot does not form a pattern, the assumption of the Heteroscedasticity test is fulfilled
+
+Interpretation:
+1. The Model formed has an Adjusted R square Value of 0.7444, and all Assumption        Tests have been fulfilled.
+2. The Model formed is y = -6426.101 + 9.332percent_m + 18.012mean_education +                                  10.265police_exp60 + 2.234m_per1000f -6.087 unemploy_m24                             +18.735unemploy_m39+6.133inequality -3796.032prob_prison                  
+
+
+
+
